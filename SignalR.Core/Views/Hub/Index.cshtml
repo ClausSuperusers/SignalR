@@ -1,0 +1,79 @@
+﻿
+@{
+    ViewBag.Title = "Hub Index";
+}
+
+<h2>Hub Index</h2>
+
+@*@if (User.Identity.IsAuthenticated)
+{*@
+    <div class="row">
+        <div class="col-md-8">
+            <p>Chat</p>
+            <ul id="chatList">
+            </ul>
+            <div class="panel">
+                <div class="panel page-header">
+                    <p>Enter Your message</p>
+                </div>
+                <input type="text" id="chatMessage"/>
+                <button type="button" class="btn btn-info" id="sendChat">Send</button>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <p><span id="hitCount"></span> people online</p>
+            <ul id="onlineList"></ul>
+        </div>
+    </div>
+
+
+    @section scripts {
+        @Scripts.Render("~/Content/hubs")
+        <script>
+            $(function () {
+                var con = $.hubConnection();
+                var hub = con.createHubProxy('baseHub');
+
+                // People logged-in counter:
+                hub.on('onHitCountUpdated', function (hitCount) {
+                    $('#hitCount').text(hitCount);
+                });
+
+                // Person came online
+                hub.on('onLogin', function (userId, userName, ipAddress) {
+                    var listItem = "<li id='" + userId + "'>" + userName + "</br>" + userId + "/" + ipAddress + "</li>";
+                    $('#onlineList').append(listItem);
+                });
+
+                // Person came offline
+                hub.on('onLogoff', function (userId) {
+                    $('#' + userId).remove();
+                });
+
+                // Incoming chatmessage
+                hub.on("onChat", function (userName, chatMessage) {
+                    var newChat = "<li title='" + userName + "'>" + chatMessage + "</li>";
+
+                    $('#chatList').prepend(newChat);
+                });
+
+                // Send a chat
+                $("#sendChat").click(function () {
+                    hub.invoke('onChat', $("#chatMessage").val());
+                    $("#chatMessage").val("");
+                })
+
+                con.start(function () {
+                    hub.invoke('RecordHit');
+                });
+
+            });
+        </script>
+    }
+@*}
+else
+{
+    <div class="jumbotron">
+        <h2>Login, to access the hub!</h2>
+    </div>
+}*@
